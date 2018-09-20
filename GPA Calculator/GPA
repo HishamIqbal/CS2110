@@ -1,0 +1,396 @@
+//Mohammad Hisham Iqbal mhi8zx GPA Calculator
+
+// Source: docs.oracle.com
+//https://junit.org/junit5/
+//http://junit.sourceforge.net/junit3.8.1/javadoc/junit/framework/TestCase.html
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.swing.*;
+
+public class GPA{
+	
+	//Instance variables 
+	private ArrayList<JTextField> courses;
+	private ArrayList<JComboBox> graded;
+	private ArrayList<JTextField> creditsorder;
+	private ArrayList<JButton> enteredItems, deletedItems;
+	private ArrayList<JLabel> statusList;
+	private ArrayList<Double> ValueOfCredits, ValueOfGrades;
+	//ArrayList describing grades
+	private String[] grades = {null,"A","A-","B+","B","B-","C+","C","C-","D+","D","F"};
+	private double[] numbers = {3.0, 4.0, 3.7, 3.3, 3.0, 2.7, 2.3, 2.0, 1.7, 1.3, 1.0, 0.0};
+	private JFrame frame;
+	//Used for the actual window
+	private JPanel masterPanel, topPanel, coursePanel, courseTitle, bottomPanel;
+	private JPanel midPanel, currentPanel, targetPanel, requiredPanel, warningPanel;
+	private JLabel currentGPALabel, currentGPADisplay, requiredGPALabel, requiredGPADisplay, targetGPALabel, warningLabel;
+	private JTextField targetGPATextField;
+	private JScrollPane scrollPane;
+	private int totalEnters;
+	private JButton addCourse, refresh, ButtonForCurrent, ReqButton;
+	private int rowsTotal;
+	private int courseTotal;
+	private int GRT = 0;
+	private final static int columns = 6;
+	private final static int FONT_SIZE = 20;
+	
+	public static void main(String[] args) {
+		//Runs the application fully
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				GPA Application = new GPA(); // GUI application
+			}
+		});
+	}
+	
+	//Taken from class
+	public GPA(){
+    	
+		createAndShowGUI();
+    }
+	
+	public void createAndShowGUI() {
+		
+		//Variables for calculating grades
+		courses = new ArrayList<JTextField>();
+    		graded = new ArrayList<JComboBox>();
+    		creditsorder = new ArrayList<JTextField>();
+    		enteredItems = new ArrayList<JButton>();
+    		deletedItems = new ArrayList<JButton>();
+    		ValueOfCredits = new ArrayList<Double>();
+    		ValueOfGrades = new ArrayList<Double>();
+    		statusList = new ArrayList<JLabel>();
+    	
+        //Sets the window for the GPA
+        frame = new JFrame("SimpleFrameDemo");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(1350,400);
+		frame.setTitle("Calculate Your GPA");
+		frame.setLayout(new BorderLayout());
+		frame.setVisible(true);
+		
+		masterPanel = new JPanel(new BorderLayout());
+		topPanel = new JPanel(new BorderLayout());
+		midPanel = new JPanel(new GridLayout(4, 1));
+		bottomPanel = new JPanel(new FlowLayout());
+		
+		//Course Titles
+		courseTitle = new JPanel(new GridLayout(1,columns));
+		
+		JLabel LabelForCourses = new JLabel("COURSE NAME", JLabel.CENTER);
+		LabelForCourses.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+		JLabel LabelForGrades = new JLabel("GRADE", JLabel.CENTER);
+		LabelForGrades.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+		JLabel LabelForCredits = new JLabel("CREDIT-HOURS", JLabel.CENTER);
+		LabelForCredits.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+		JLabel LabelForEnter = new JLabel("ENTER", JLabel.CENTER);
+		LabelForEnter.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+		JLabel LabelForDelete = new JLabel("DELETE ROW", JLabel.CENTER);
+		LabelForDelete.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+		JLabel LabelForStatus = new JLabel("STATE", JLabel.CENTER);
+		LabelForStatus.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+		
+		courseTitle.add(LabelForCourses);
+		courseTitle.add(LabelForGrades);
+		courseTitle.add(LabelForCredits);
+		courseTitle.add(LabelForEnter);
+		courseTitle.add(LabelForDelete);
+		courseTitle.add(LabelForStatus);
+		
+
+		//Shows the first five lines that are automatically put on
+		coursePanel = new JPanel(new GridLayout(courseTotal, columns));
+		for(int i = 0; i < 5; i++) {
+	    		addCourseLine(i+1);
+	    		courseTotal++;
+		}
+		
+		//Adds courses for the user
+		addCourse = new JButton("Add Course");
+		addCourse.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				addCourseLine(courseTotal+1);
+				courseTotal++;
+				frame.setVisible(true);
+			}
+		});
+		
+		//Refresh button for courses
+		refresh = new JButton("Refresh All (Add 15 Blank Credit-Hours)");
+		refresh.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				courseTotal = 0;
+				coursePanel.removeAll();
+				coursePanel.updateUI();
+				for(int i = 0; i < 5; i++) {
+			    	addCourseLine(i+1);
+			    	courseTotal++;
+				}
+				ButtonForCurrent.setEnabled(false);
+				ReqButton.setEnabled(false);
+				
+				ValueOfCredits.clear();
+				ValueOfGrades.clear();
+				//Blanks for the entering spaces
+		    		currentGPADisplay.setText("---");
+				currentGPADisplay.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+				
+				requiredGPADisplay.setText("---");
+				requiredGPADisplay.setForeground(Color.BLACK);
+				requiredGPADisplay.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+				
+				targetGPATextField.setText("0.0");
+				targetGPATextField.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+				
+				warningLabel.setText("");
+				warningLabel.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+
+			}
+			
+		});
+		//Puts the label for the current GPA
+		ButtonForCurrent = new JButton("Calculate Current GPA");
+		ButtonForCurrent.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				currentGPADisplay.setText("" + calculateCurrentGPA(ValueOfGrades,ValueOfCredits));
+				currentGPADisplay.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));	    	
+			}
+			
+		});
+		ButtonForCurrent.setEnabled(false);
+		
+		//required GPA 
+		ReqButton = new JButton("Calculate Required GPA");
+		ReqButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				double requiredGPA = calculateRequiredGPA(ValueOfGrades, ValueOfCredits);
+				//Warning for too high of a GPA
+				if(requiredGPA > 4.0) {
+					requiredGPADisplay.setText("" + calculateRequiredGPA(ValueOfGrades, ValueOfCredits));
+					requiredGPADisplay.setForeground(Color.RED);
+					requiredGPADisplay.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+					
+					warningLabel.setText("*GPA TOO HIGH. ADD MORE CREDIT HOURS OR LOWER YOUR TARGET GPA*");
+					warningLabel.setFont(new Font("Serif", Font.BOLD, 16));
+				}
+				//Warning for too low of a GPA
+				else if(requiredGPA < 2.0) {
+					requiredGPADisplay.setText("" + calculateRequiredGPA(ValueOfGrades, ValueOfCredits));
+					requiredGPADisplay.setForeground(Color.RED);
+					requiredGPADisplay.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+					
+					warningLabel.setText("*GPA TOO LOW. ADD FEWER CREDIT HOURS OR RAISE YOUR TARGET GPA*");
+					warningLabel.setFont(new Font("Serif", Font.BOLD, 16));
+				}
+				else {
+					requiredGPADisplay.setText("" + calculateRequiredGPA(ValueOfGrades, ValueOfCredits));
+					requiredGPADisplay.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+					
+					warningLabel.setText("");
+					warningLabel.setFont(new Font("Serif", Font.BOLD, 16));
+				}
+			}
+		});
+		ReqButton.setEnabled(false);
+		
+		topPanel.add(courseTitle, BorderLayout.NORTH);
+		topPanel.add(coursePanel, BorderLayout.SOUTH);
+		
+		bottomPanel.add(addCourse);
+		bottomPanel.add(refresh);	
+		bottomPanel.add(ButtonForCurrent);
+		bottomPanel.add(ReqButton);
+		
+		initializeGPAPanel(midPanel);
+		
+		masterPanel.add(topPanel, BorderLayout.NORTH);
+		masterPanel.add(midPanel, BorderLayout.CENTER);
+		masterPanel.add(bottomPanel, BorderLayout.SOUTH);
+		
+		scrollPane = new JScrollPane(masterPanel);
+		
+		frame.add(scrollPane);
+		//Centers it to screen
+        frame.setLocationRelativeTo(null); 
+        frame.setVisible(true);
+    }
+	
+	public double calculateRequiredGPA(ArrayList<Double> grades, ArrayList<Double> credits) {
+		//Formula for requiredGPA = [(targetGPA * totalCredits) - (currentGPA - currentCredits)] / untaken credits, according to collab
+		
+		//Uses the targetGPA put in by the user
+		double targetGPA = Double.parseDouble(targetGPATextField.getText());
+		
+		//Calculates totalCredits
+	    double totalCredits = 0;
+	    for(int i = 0; i < credits.size(); i++)
+	    {
+	    	totalCredits += credits.get(i);
+	    }
+	    
+		//calculates currentGPA
+		double currentGPA = calculateCurrentGPA(grades, credits);    
+
+	    //Calculates currentCredits
+	    double currentCredits = 0;
+	    for(int i = 0; i < grades.size(); i++)
+	    {
+	    	currentCredits += credits.get(i);
+	    }
+
+	    //Calculates untakenCredits
+	    double untakenCredits = totalCredits - currentCredits;
+
+	    //Calculates requiredGPA
+		double requiredGPA = ((totalCredits * targetGPA)-(currentGPA*currentCredits))/untakenCredits;
+		return requiredGPA;
+	}
+	//Calculates the CurrentGPA of the courses entered with credits and grades
+	//Assumes that the calculator takes in the grades of only the rows that have credits entered
+	public double calculateCurrentGPA(ArrayList<Double> grades, ArrayList<Double> credits)
+	{
+		double sum = 0.0;
+		double creditSum = 0.0;
+	    for(int i = 0; i < grades.size(); i++)
+	    {
+	        sum += (grades.get(i)*credits.get(i));
+	        creditSum += credits.get(i);
+	        System.out.println("Run " + i + ": " + "Grade = " + grades.get(i) + ", Credit = " + credits.get(i));
+	    }
+	    double totalCredits = 0.0;
+	    for(double element : credits) {
+	    	totalCredits += element;
+	    }
+	    double currentGPA = sum/creditSum;
+	    return currentGPA;
+	}
+	
+	//Creates the panel for the actual window
+	public void initializeGPAPanel(JPanel mpanel) {
+		currentPanel = new JPanel(new GridLayout(1,2));
+		requiredPanel = new JPanel(new GridLayout(1,2));
+		targetPanel = new JPanel(new GridLayout(1,2));
+		warningPanel = new JPanel(new GridLayout(1,2));
+		
+		//Current GPA label
+		currentGPALabel = new JLabel("Current GPA: ", JLabel.LEFT);
+		currentGPALabel.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+		currentGPADisplay = new JLabel("-.-", JLabel.CENTER);
+		currentGPADisplay.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+		currentPanel.add(currentGPALabel); currentPanel.add(currentGPADisplay);
+		
+		//required GPA GUIs - need JLabel for "Required GPA: " and another JLabel that displays the Required GPA
+		/* Calculate GPA button will remain inactive until the parameters have been fulfilled*/
+		requiredGPALabel = new JLabel("GPA required on remaining unfilled credits: ", JLabel.LEFT);
+		requiredGPALabel.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+		requiredGPADisplay = new JLabel("-.-", JLabel.CENTER);
+		requiredGPADisplay.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+		requiredPanel.add(requiredGPALabel); requiredPanel.add(requiredGPADisplay);
+		
+		//Target GPA label
+		targetGPALabel = new JLabel("Enter Target GPA: ", JLabel.LEFT);
+		targetGPALabel.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+		targetGPATextField = new JTextField("0.0", JTextField.CENTER);
+		targetGPATextField.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+		targetPanel.add(targetGPALabel); targetPanel.add(targetGPATextField);
+		
+		//Warning label for the GPA requirement
+		warningLabel = new JLabel("", JLabel.CENTER);
+		warningLabel.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
+		warningPanel.add(warningLabel);
+		
+		mpanel.add(targetPanel);
+		mpanel.add(currentPanel);
+		mpanel.add(requiredPanel);
+		mpanel.add(warningPanel);
+	}
+	//Entering the courses
+	//Assumes the user is putting in one course at a time and presses enter if the course counts
+	public void addCourseLine(int index) {	  	
+    	JTextField course = new JTextField("Enter Course Line");
+		this.courses.add(course);
+		this.coursePanel.add(course);
+
+    	
+		JComboBox grade = new JComboBox(grades);
+
+		this.graded.add(grade);
+		this.coursePanel.add(grade);
+		
+		
+		//JLabel for the credits fields
+		JTextField credit = new JTextField("3.0");
+		this.creditsorder.add(credit);
+		this.coursePanel.add(credit);
+		
+		//JLabel for the entering courses
+		JButton enter = new JButton("Enter Course " + index);
+		JButton delete = new JButton("Delete");
+		JLabel status = new JLabel("No Action", JLabel.CENTER);
+		this.enteredItems.add(enter);
+		this.deletedItems.add(delete);
+		this.statusList.add(status);
+		enter.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String creditText = credit.getText();
+				String gradeText = (String) grade.getSelectedItem();
+				String courseText = course.getText();
+				final String targetText = targetGPATextField.getText();
+				if(creditText != null) {
+					int position = 0;
+					ValueOfCredits.add(Double.parseDouble(creditText));
+					if(gradeText != null) {
+						for(int i = 0; i < grades.length; i++) {
+							if(grades[i] == gradeText) {
+								position = i;
+							}
+						}
+						ValueOfGrades.add(numbers[position]);
+						status.setText("Grades & Credits Entered");
+						ButtonForCurrent.setEnabled(true);
+					}
+					else {
+						status.setText("Just Credits Entered");
+					}
+					if(targetText != "0.0") {
+						ReqButton.setEnabled(true);
+					}
+				}
+				//For the loop, set everything to false
+				credit.setEditable(false);
+				grade.setEditable(false);	
+				course.setEditable(false);
+				enter.setEnabled(false);
+				delete.setEnabled(false);
+				
+			}
+		});
+		this.coursePanel.add(enter);
+		
+		//Button for Deleting a course. 
+		//Assumes that once the user deletes a course which isnt taken into account when calculating GPA
+		delete.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				credit.setEditable(false);
+				grade.setEditable(false);	
+				course.setEditable(false);
+				enter.setEnabled(false);
+				delete.setEnabled(false);
+				status.setText("Course Deleted");
+			}
+		});
+		this.coursePanel.add(delete);
+		this.coursePanel.add(status);
+		
+	}
+}
